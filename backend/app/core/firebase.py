@@ -15,7 +15,10 @@ def initialize_firebase() -> None:
     if not firebase_admin._apps:
         credential_path: Path = settings.firebase_credentials_path
         if not credential_path.is_file():
-            raise RuntimeError(f"Firebase service-account file not found: {credential_path}")
+            print(f"[ERROR] Firebase credential not found: {credential_path}")
+            raise RuntimeError(
+                f"Firebase service-account file not found: {credential_path}"
+            )
         cred = credentials.Certificate(str(credential_path))
         firebase_admin.initialize_app(cred)
         print("[OK] Firebase Admin initialized")
