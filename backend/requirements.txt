@@ -3,3 +3,4 @@ cloudinary==1.45.0
 six==1.17.0
 urllib3==2.7.0
 email-validator
+uvicorn[standard]
