@@ -8,7 +8,6 @@ RUN pip install --upgrade pip
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# TEMPORARY TEST
 RUN python -c "import cloudinary; print('CLOUDINARY_OK')"
 
 COPY . .
