@@ -41,7 +41,7 @@ export function CitizenBenefitsSection() {
             Civic voice that actually gets heard
           </h2>
           <p className="mt-4 text-slate-600 dark:text-slate-300">
-            CivicAI puts clear status and accountability in your hands — not buried in paperwork.
+            Grievance Portal puts clear status and accountability in your hands — not buried in paperwork.
           </p>
         </motion.div>
 

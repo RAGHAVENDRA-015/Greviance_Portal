@@ -70,7 +70,7 @@ export function DashboardLayout({ role }: { role: 'citizen' | 'officer' | 'admin
         <div className="mb-8 flex items-center justify-between px-2">
           <Link to="/" className="flex items-center gap-2 overflow-hidden">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl gradient-primary font-bold text-white">
-              C
+              G
             </div>
             {!collapsed && <span className="font-heading font-bold">{APP_NAME}</span>}
           </Link>

@@ -11,10 +11,13 @@ Permission matrix:
     PATCH  /complaints/{id}/assign       → ADMIN only
     DELETE /complaints/{id}              → ADMIN only
 """
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from app.api.dependencies import get_current_user, require_roles
+
+logger = logging.getLogger(__name__)
 from app.enums.user import UserRole
 from app.enums.complaint import ComplaintCategory, ComplaintPriority
 from app.models.user import User
@@ -23,8 +26,10 @@ from app.schemas.complaint import (
     AssignOfficerRequest,
     ComplaintResponse,
     ComplaintUpdate,
+    ImageValidationResponse,
     StatusUpdateRequest,
 )
+from app.services.ai_service import AIService
 from app.services.complaint_service import ComplaintService
 from app.services.user_service import UserService
 
@@ -33,10 +38,82 @@ router = APIRouter(
     tags=["Complaints"],
 )
 
+_ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
+_MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+# ---------------------------------------------------------------------------
+# POST /complaints/validate-image — Validate image relevance using Gemini Vision
+# ---------------------------------------------------------------------------
+
+@router.post(
+    "/validate-image",
+    response_model=ImageValidationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Validate whether an image is relevant to a civic complaint",
+)
+async def validate_image(
+    image: UploadFile = File(...),
+    category: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Analyzes an uploaded image using Gemini multimodal vision AI to verify
+    it depicts genuine civic grievance context matching category/description.
+    """
+    content_type = (image.content_type or "image/jpeg").lower()
+    if content_type not in _ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported image type: '{content_type}'. Allowed types: JPEG, PNG, WebP.",
+        )
+
+    image_bytes = await image.read()
+    if not image_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded image file is empty.",
+        )
+
+    if len(image_bytes) > _MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image size exceeds maximum limit of 10MB.",
+        )
+
+    logger.info(
+        "[validate_image] called filename=%r content_type=%r category=%r description=%r size=%d",
+        image.filename,
+        content_type,
+        category,
+        description,
+        len(image_bytes),
+    )
+
+    result = await AIService.validate_image_relevance(
+        image_bytes=image_bytes,
+        mime_type=content_type,
+        category=category,
+        description=description,
+    )
+
+    logger.info(
+        "[validate_image] result relevant=%s reason=%r",
+        result.relevant,
+        result.reason,
+    )
+
+    return ImageValidationResponse(
+        relevant=result.relevant,
+        reason=result.reason,
+    )
+
 
 # ---------------------------------------------------------------------------
 # POST /complaints/ — Create complaint (Citizen only)
 # ---------------------------------------------------------------------------
+
 
 @router.post(
     "/",

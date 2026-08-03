@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react'
 
 const faqs = [
   {
-    q: 'Who can file a grievance on CivicAI?',
+    q: 'Who can file a grievance on Grievance Portal?',
     a: 'Any registered citizen can submit complaints. Officers and admins use separate dashboards to manage and resolve cases.',
   },
   {
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'Is my data secure?',
-    a: 'CivicAI uses authenticated sessions, role-based access, and audit trails so only authorized users can view or act on sensitive cases.',
+    a: 'Grievance Portal uses authenticated sessions, role-based access, and audit trails so only authorized users can view or act on sensitive cases.',
   },
   {
     q: 'Which departments are supported?',

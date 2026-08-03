@@ -39,7 +39,7 @@ export function AISection() {
               An <span className="gradient-text">AI-powered system</span> that understands civic language
             </h2>
             <p className="mt-4 max-w-xl text-slate-600 dark:text-slate-300">
-              CivicAI uses Gemini to classify grievances, extract location cues, and recommend
+              Grievance Portal uses Gemini to classify grievances, extract location cues, and recommend
               departments — so officers spend less time sorting and more time solving.
             </p>
 

@@ -1,6 +1,6 @@
 import type { ComplaintCategory, ComplaintPriority, ComplaintStatus } from '@/types'
 
-export const APP_NAME = 'CivicAI'
+export const APP_NAME = 'Grievance Portal'
 export const APP_TAGLINE = 'AI-Powered Smart Citizen Grievance Portal'
 
 export const COMPLAINT_STATUSES: ComplaintStatus[] = [

@@ -9,7 +9,7 @@ export function Footer() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary font-bold text-white">
-              C
+              G
             </div>
             <span className="font-heading text-lg font-bold">{APP_NAME}</span>
           </div>
@@ -41,8 +41,8 @@ export function Footer() {
         <div>
           <h4 className="font-semibold">Contact</h4>
           <ul className="mt-4 space-y-3 text-sm text-slate-500">
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> support@civicai.gov</li>
-            <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> 1800-CIVIC-AI</li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> support@grievanceportal.gov</li>
+            <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> 1800-GRIEV-AI</li>
             <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Digital India Hub</li>
           </ul>
         </div>

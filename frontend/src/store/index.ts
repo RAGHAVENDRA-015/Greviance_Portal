@@ -158,7 +158,7 @@ export const useThemeStore = create<ThemeState>()(
         document.documentElement.classList.toggle('dark', resolved === 'dark')
       },
     }),
-    { name: 'civicai-theme' },
+    { name: 'grievance-portal-theme' },
   ),
 )
 

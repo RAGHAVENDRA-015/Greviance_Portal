@@ -84,3 +84,9 @@ class ComplaintResponse(BaseModel):
             created_at=complaint.created_at,
             updated_at=complaint.updated_at,
         )
+
+
+class ImageValidationResponse(BaseModel):
+    relevant: bool
+    reason: str
+

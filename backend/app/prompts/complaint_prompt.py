@@ -46,3 +46,24 @@ Return JSON in exactly this format (no markdown, no explanation):
 
 Complaint:
 """
+
+IMAGE_VALIDATION_PROMPT = """You are strictly validating whether an uploaded image is genuine photographic evidence for a civic complaint.
+
+Complaint category: \"{category}\"
+Complaint description: \"{description}\"
+
+Analyze the image and respond ONLY with JSON, no other text:
+{"relevant": true or false, "reason": "short explanation"}
+
+Mark relevant:false if ANY of these apply:
+- The image is a screenshot (of a phone, app, website, chat, document, etc.)
+- The image is a meme, illustration, drawing, or AI-generated image
+- The image is a selfie or unrelated personal photo
+- The image is blank, blurry beyond recognition, or a solid color
+- The image does not show real-world physical evidence matching the complaint category and description
+
+Mark relevant:true ONLY if the image is a genuine real-world photograph that plausibly shows the issue described (e.g., an actual pothole, actual garbage pile, actual broken streetlight, actual water leakage, etc. matching the category).
+
+Be strict. When in doubt, mark false.
+"""
+

@@ -57,7 +57,7 @@ export function LandingNavbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-white font-bold">
-            C
+            G
           </div>
           <span className="font-heading text-lg font-bold tracking-tight">{APP_NAME}</span>
         </Link>

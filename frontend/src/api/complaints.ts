@@ -6,8 +6,20 @@ import type {
   CreateComplaintForm,
   StatusUpdatePayload,
 } from '@/types'
-
 export const complaintsApi = {
+  validateImage: async (file: File, category?: string, description?: string) => {
+    const body = new FormData()
+    body.append('image', file)
+    if (category) body.append('category', category)
+    if (description) body.append('description', description)
+
+    const { data } = await api.post<{ relevant: boolean; reason: string }>(
+      '/complaints/validate-image',
+      body,
+    )
+    return data
+  },
+
   create: async (form: CreateComplaintForm) => {
     const body = new FormData()
     body.append('title', form.title)

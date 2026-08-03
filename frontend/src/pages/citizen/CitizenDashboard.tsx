@@ -255,18 +255,18 @@ export default function CitizenDashboard() {
               subtitle="Jump into common tasks"
               action={<List className="h-4 w-4 text-slate-400" />}
             />
-            <div className="space-y-2">
-              <Link to={ROUTES.citizen.createComplaint}>
+            <div className="flex flex-col gap-3">
+              <Link to={ROUTES.citizen.createComplaint} className="block">
                 <Button className="w-full" leftIcon={<PlusCircle className="h-4 w-4" />}>
                   File a complaint
                 </Button>
               </Link>
-              <Link to={ROUTES.citizen.complaints}>
+              <Link to={ROUTES.citizen.complaints} className="block">
                 <Button className="w-full" variant="outline" leftIcon={<FileText className="h-4 w-4" />}>
                   Browse my complaints
                 </Button>
               </Link>
-              <Link to={ROUTES.citizen.profile}>
+              <Link to={ROUTES.citizen.profile} className="block">
                 <Button className="w-full" variant="ghost">
                   Update profile
                 </Button>

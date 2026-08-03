@@ -77,7 +77,7 @@ export default function RegisterPage() {
       className="w-full max-w-md rounded-3xl glass-strong p-8 shadow-2xl sm:p-10"
     >
       <Link to="/" className="mb-6 inline-flex items-center gap-2 font-heading text-lg font-bold">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary text-sm text-white">C</span>
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary text-sm text-white">G</span>
         {APP_NAME}
       </Link>
       <h2 className="font-display text-2xl font-extrabold">Create your account</h2>

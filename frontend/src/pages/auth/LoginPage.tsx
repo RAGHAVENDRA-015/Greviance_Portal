@@ -80,7 +80,7 @@ export default function LoginPage() {
 
       <div className="p-8 sm:p-10">
         <Link to="/" className="mb-8 inline-flex items-center gap-2 font-heading text-lg font-bold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary text-sm text-white">C</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary text-sm text-white">G</span>
           {APP_NAME}
         </Link>
         <h2 className="font-display text-2xl font-extrabold">Welcome back</h2>
