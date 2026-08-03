@@ -1,26 +1,25 @@
-from pathlib import Path
-
+import json
+import os
 import firebase_admin
 from firebase_admin import credentials
 
-from app.core.config import settings
+def initialize_firebase():
+    if firebase_admin._apps:
+        return  # already initialized
 
+    firebase_json_env = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
 
-def initialize_firebase() -> None:
-    """
-    Initialize Firebase Admin SDK (Auth token verification only).
-    Safe to call multiple times — skips if already initialized.
-    Storage is handled by Cloudinary; no Firebase Storage bucket required.
-    """
-    if not firebase_admin._apps:
-        credential_path: Path = settings.firebase_credentials_path
-        if not credential_path.is_file():
-            print(f"[ERROR] Firebase credential not found: {credential_path}")
-            raise RuntimeError(
-                f"Firebase service-account file not found: {credential_path}"
-            )
-        cred = credentials.Certificate(str(credential_path))
-        firebase_admin.initialize_app(cred)
-        print("[OK] Firebase Admin initialized")
+    if firebase_json_env:
+        # Production (Render) — load from env var
+        cred_dict = json.loads(firebase_json_env)
+        cred = credentials.Certificate(cred_dict)
     else:
-        print("[INFO] Firebase already initialized, skipping.")
+        # Local dev — fall back to file path
+        credential_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "firebase", "firebase-service-account.json"
+        )
+        if not os.path.exists(credential_path):
+            raise RuntimeError(f"Firebase service-account file not found: {credential_path}")
+        cred = credentials.Certificate(credential_path)
+
+    firebase_admin.initialize_app(cred)

@@ -11,13 +11,10 @@ Permission matrix:
     PATCH  /complaints/{id}/assign       → ADMIN only
     DELETE /complaints/{id}              → ADMIN only
 """
-import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from app.api.dependencies import get_current_user, require_roles
-
-logger = logging.getLogger(__name__)
 from app.enums.user import UserRole
 from app.enums.complaint import ComplaintCategory, ComplaintPriority
 from app.models.user import User
@@ -82,26 +79,11 @@ async def validate_image(
             detail="Image size exceeds maximum limit of 10MB.",
         )
 
-    logger.info(
-        "[validate_image] called filename=%r content_type=%r category=%r description=%r size=%d",
-        image.filename,
-        content_type,
-        category,
-        description,
-        len(image_bytes),
-    )
-
     result = await AIService.validate_image_relevance(
         image_bytes=image_bytes,
         mime_type=content_type,
         category=category,
         description=description,
-    )
-
-    logger.info(
-        "[validate_image] result relevant=%s reason=%r",
-        result.relevant,
-        result.reason,
     )
 
     return ImageValidationResponse(
