@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str
     ALLOWED_ORIGINS: str = (
         "http://localhost:3000,http://localhost:5173,"
-        "http://127.0.0.1:3000,http://127.0.0.1:5173"
+        "http://127.0.0.1:3000,http://127.0.0.1:5173",
+        "https://greviance-portal-kappa.vercel.app"
     )
     GOOGLE_MAPS_API_KEY: str | None = None
 

@@ -74,6 +74,8 @@ app.add_middleware(
     expose_headers=["Content-Type"],
 )
 
+print("Loaded ALLOWED_ORIGINS:", settings.allowed_origins)
+
 
 # ---------------------------------------------------------------------------
 # Global Exception Handlers
