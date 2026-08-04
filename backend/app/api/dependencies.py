@@ -2,6 +2,8 @@
 
 from typing import Callable
 
+import traceback
+
 from fastapi import Depends, Header, HTTPException, status
 from firebase_admin import auth as firebase_auth
 
@@ -19,23 +21,39 @@ def _unauthorized(detail: str) -> HTTPException:
 
 
 async def verify_firebase_token(
-    authorization: str | None = Header(None, description="Firebase JWT in Bearer format"),
+    authorization: str | None = Header(None),
 ) -> dict:
-    """Verify a Firebase ID token supplied in ``Authorization: Bearer ...``."""
+    print("=" * 60)
+    print("Authorization Header:", authorization)
+    print("=" * 60)
+
     if not authorization:
         raise _unauthorized("Authentication is required.")
 
     scheme, _, raw_token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not raw_token.strip():
-        raise _unauthorized("Invalid Firebase token.")
+
+    print("Scheme:", scheme)
+    print("Token exists:", bool(raw_token.strip()))
 
     try:
-        return firebase_auth.verify_id_token(raw_token.strip(), check_revoked=True)
-    except (firebase_auth.RevokedIdTokenError, firebase_auth.ExpiredIdTokenError):
-        raise _unauthorized("Your session has expired. Please sign in again.")
-    except Exception:
-        # Do not expose token parsing or Firebase Admin implementation details.
-        raise _unauthorized("Invalid Firebase token.")
+        decoded = firebase_auth.verify_id_token(
+            raw_token.strip(),
+            check_revoked=True,
+        )
+
+        print("Decoded UID:", decoded.get("uid"))
+        print("Decoded Email:", decoded.get("email"))
+
+        return decoded
+
+  
+
+    except Exception as e:
+        traceback.print_exc()
+        print("Firebase Exception:", repr(e))
+        raise _unauthorized(f"Firebase verification failed: {type(e).__name__}")
+
+
 
 
 async def get_current_user(
