@@ -9,6 +9,7 @@ from pymongo import ASCENDING
 from app.core.config import settings
 from app.models.complaint import Complaint
 from app.models.user import User
+from app.models.chat_history import ChatHistory
 
 logger = logging.getLogger(__name__)
 _client: AsyncIOMotorClient | None = None
@@ -65,8 +66,8 @@ async def init_db() -> None:
     database = _client[settings.DATABASE_NAME]
 
     await _normalize_legacy_schema(database)
-    await init_beanie(database=database, document_models=[User, Complaint])
-    logger.info("MongoDB connected; registered collections: users, complaints")
+    await init_beanie(database=database, document_models=[User, Complaint, ChatHistory])
+    logger.info("MongoDB connected; registered collections: users, complaints, chat_history")
 
 
 async def close_db() -> None:

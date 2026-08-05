@@ -16,6 +16,7 @@ import { SidebarNav, DashboardTopbar } from '@/components/layout/Navbar'
 import { APP_NAME, ROUTES } from '@/constants'
 import { cn } from '@/utils'
 import { Link } from 'react-router-dom'
+import { ChatbotWidget } from '@/components/chatbot'
 
 const citizenNav = [
   { to: ROUTES.citizen.dashboard, label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -145,6 +146,8 @@ export function DashboardLayout({ role }: { role: 'citizen' | 'officer' | 'admin
           </div>
         </nav>
       )}
+
+      <ChatbotWidget />
     </div>
   )
 }

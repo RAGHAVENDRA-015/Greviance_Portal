@@ -14,6 +14,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.complaints import router as complaint_router
 from app.api.routes.users import router as user_router
 from app.api.routes.admin import router as admin_router
+from app.chatbot.routes import router as chatbot_router, chat_router
 
 
 # ---------------------------------------------------------------------------
@@ -111,6 +112,8 @@ app.include_router(auth_router)
 app.include_router(complaint_router)
 app.include_router(user_router)
 app.include_router(admin_router)
+app.include_router(chatbot_router)
+app.include_router(chat_router)  # Provides POST /chat/stream (SSE)
 
 
 # ---------------------------------------------------------------------------

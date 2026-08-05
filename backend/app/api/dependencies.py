@@ -69,6 +69,23 @@ async def get_current_user(
     return user
 
 
+async def get_optional_current_user(
+    authorization: str | None = Header(None),
+) -> User | None:
+    """Resolve current user if valid Firebase token present, otherwise return None."""
+    if not authorization:
+        return None
+    try:
+        payload = await verify_firebase_token(authorization)
+        if payload and payload.get("uid") and payload.get("email"):
+            user = await UserService.get_or_create_user(payload)
+            if user.is_active:
+                return user
+    except Exception:
+        pass
+    return None
+
+
 def require_roles(*roles: UserRole) -> Callable:
     """Return a dependency that permits only users holding one of ``roles``."""
     allowed = set(roles)

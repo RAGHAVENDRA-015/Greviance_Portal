@@ -1,16 +1,26 @@
-from sentence_transformers import SentenceTransformer
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from app.chatbot.config import EMBEDDING_MODEL
 
 
 class EmbeddingModel:
+    """Singleton wrapper around the embedding model."""
 
-    _model = None
+    _embeddings = None
 
     @classmethod
-    def get_model(cls):
+    def get_embeddings(cls):
 
-        if cls._model is None:
-            cls._model = SentenceTransformer(EMBEDDING_MODEL)
+        if cls._embeddings is None:
 
-        return cls._model
+            cls._embeddings = HuggingFaceEmbeddings(
+                model_name=EMBEDDING_MODEL,
+                model_kwargs={
+                    "device": "cpu"
+                },
+                encode_kwargs={
+                    "normalize_embeddings": True
+                }
+            )
+
+        return cls._embeddings
