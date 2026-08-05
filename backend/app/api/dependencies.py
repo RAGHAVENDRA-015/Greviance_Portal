@@ -1,8 +1,5 @@
-"""Firebase authentication and role-based authorization dependencies."""
-
-from typing import Callable
-
-import traceback
+import logging
+from typing import Callable, Optional
 
 from fastapi import Depends, Header, HTTPException, status
 from firebase_admin import auth as firebase_auth
@@ -10,6 +7,8 @@ from firebase_admin import auth as firebase_auth
 from app.enums.user import UserRole
 from app.models.user import User
 from app.services.user_service import UserService
+
+logger = logging.getLogger(__name__)
 
 
 def _unauthorized(detail: str) -> HTTPException:
@@ -21,37 +20,25 @@ def _unauthorized(detail: str) -> HTTPException:
 
 
 async def verify_firebase_token(
-    authorization: str | None = Header(None),
+    authorization: Optional[str] = Header(None),
 ) -> dict:
-    print("=" * 60)
-    print("Authorization Header:", authorization)
-    print("=" * 60)
-
     if not authorization:
         raise _unauthorized("Authentication is required.")
 
     scheme, _, raw_token = authorization.partition(" ")
-
-    print("Scheme:", scheme)
-    print("Token exists:", bool(raw_token.strip()))
+    if scheme.lower() != "bearer" or not raw_token.strip():
+        raise _unauthorized("Invalid authorization header format. Expected 'Bearer <token>'.")
 
     try:
         decoded = firebase_auth.verify_id_token(
             raw_token.strip(),
             check_revoked=True,
         )
-
-        print("Decoded UID:", decoded.get("uid"))
-        print("Decoded Email:", decoded.get("email"))
-
         return decoded
+    except Exception as exc:
+        logger.warning("Firebase token verification failed: %s (%s)", type(exc).__name__, exc)
+        raise _unauthorized(f"Firebase verification failed: {type(exc).__name__}")
 
-  
-
-    except Exception as e:
-        traceback.print_exc()
-        print("Firebase Exception:", repr(e))
-        raise _unauthorized(f"Firebase verification failed: {type(e).__name__}")
 
 
 

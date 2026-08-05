@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from app.api.dependencies import get_current_user, get_optional_current_user
 from app.chatbot.schemas import ChatRequest, ChatResponse
-from app.chatbot.service import ChatbotService
+from app.chatbot.service import ChatbotService, get_chatbot_service
 from app.models.user import User
 
 router = APIRouter(
@@ -22,8 +22,6 @@ chat_router = APIRouter(
     tags=["Chatbot"],
 )
 
-service = ChatbotService()
-
 
 @router.post(
     "",
@@ -33,6 +31,7 @@ service = ChatbotService()
 async def chat(
     request: ChatRequest,
     current_user: User = Depends(get_current_user),
+    service: ChatbotService = Depends(get_chatbot_service),
 ) -> ChatResponse:
     """
     Standard synchronous chatbot endpoint.
@@ -58,6 +57,7 @@ async def chat_stream_legacy(
     message: Optional[str] = Query(None),
     request: Optional[ChatRequest] = None,
     current_user: Optional[User] = Depends(get_optional_current_user),
+    service: ChatbotService = Depends(get_chatbot_service),
 ):
     """
     Legacy plain-text streaming endpoint. Preserved for backward compatibility.
@@ -79,6 +79,7 @@ async def chat_stream_legacy(
 async def chat_stream_sse(
     request: ChatRequest,
     current_user: Optional[User] = Depends(get_optional_current_user),
+    service: ChatbotService = Depends(get_chatbot_service),
 ):
     """
     Real-time SSE streaming endpoint for ChatGPT-style typing responses.
@@ -94,6 +95,7 @@ async def chat_stream_sse(
         media_type="text/event-stream; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Disable Nginx buffering for SSE
         },
     )

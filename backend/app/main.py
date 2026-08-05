@@ -27,6 +27,9 @@ logging.basicConfig(
 )
 
 
+logger = logging.getLogger("app.main")
+
+
 # ---------------------------------------------------------------------------
 # Application Lifespan
 # ---------------------------------------------------------------------------
@@ -34,13 +37,31 @@ logging.basicConfig(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize external services on startup."""
-    initialize_firebase()
-    initialize_cloudinary()
-    await init_db()
+    logger.info("Application startup: initializing services...")
+    try:
+        initialize_firebase()
+    except Exception as exc:
+        logger.error("Failed to initialize Firebase: %s", exc)
+
+    try:
+        initialize_cloudinary()
+    except Exception as exc:
+        logger.error("Failed to initialize Cloudinary: %s", exc)
+
+    try:
+        await init_db()
+        logger.info("MongoDB initialized successfully.")
+    except Exception as exc:
+        logger.critical("Failed to initialize MongoDB: %s", exc)
+        raise
+
+    logger.info("Application startup complete. Ready to receive requests.")
     try:
         yield
     finally:
+        logger.info("Application shutdown: closing connections...")
         await close_db()
+        logger.info("Application shutdown complete.")
 
 
 # ---------------------------------------------------------------------------
@@ -62,20 +83,17 @@ app = FastAPI(
 # CORS — Allow React frontend to communicate
 # ---------------------------------------------------------------------------
 
-# Read from env — comma-separated list of allowed origins
-# Development default: localhost:3000 and localhost:5173
 ALLOWED_ORIGINS = settings.allowed_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    # Authentication is bearer-token based; no cookies or server sessions.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["Content-Type"],
 )
 
-print("Loaded ALLOWED_ORIGINS:", settings.allowed_origins)
+logger.info("Configured CORS with ALLOWED_ORIGINS: %s", ALLOWED_ORIGINS)
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +110,7 @@ async def not_found_handler(request: Request, exc):
 
 @app.exception_handler(500)
 async def internal_error_handler(request: Request, exc):
-    logging.getLogger(__name__).error(
+    logger.error(
         "Unhandled server error for %s %s",
         request.method,
         request.url.path,
@@ -117,10 +135,17 @@ app.include_router(chat_router)  # Provides POST /chat/stream (SSE)
 
 
 # ---------------------------------------------------------------------------
-# Health Check
+# Health Check Endpoints
 # ---------------------------------------------------------------------------
 
 @app.get("/", tags=["Health"])
 async def root():
-    """Simple health check endpoint."""
+    """Fast root health check endpoint for deployment monitoring."""
     return {"status": "ok", "service": "Citizen Grievance Portal API"}
+
+
+@app.get("/health", tags=["Health"])
+async def health():
+    """Explicit health check endpoint."""
+    return {"status": "ok"}
+

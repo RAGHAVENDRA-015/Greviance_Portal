@@ -5,6 +5,7 @@ Supports both synchronous chat, real-time streaming, and SSE streaming responses
 import asyncio
 import json
 import logging
+import threading
 from typing import Dict, Any, List, Optional, AsyncGenerator
 
 from google.genai import types
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 class ChatbotService:
     """
     Core Chatbot orchestrator service supporting both standard and streaming chat responses.
+    Heavy components such as RAG retriever & vector store are lazily initialized on demand.
     """
 
     def __init__(
@@ -36,10 +38,18 @@ class ChatbotService:
         complaint_tool: Optional[ComplaintTool] = None,
         memory_service: Optional[MemoryService] = None,
     ) -> None:
-        self.retriever = retriever or KnowledgeRetriever()
+        self._retriever = retriever
         self.router = router or IntentRouter()
         self.complaint_tool = complaint_tool or ComplaintTool()
         self.memory_service = memory_service or MemoryService()
+
+    @property
+    def retriever(self) -> KnowledgeRetriever:
+        """Lazily initialize KnowledgeRetriever only when knowledge search is called."""
+        if self._retriever is None:
+            self._retriever = KnowledgeRetriever()
+        return self._retriever
+
 
     async def chat(self, question: str, user: Optional[User] = None) -> Dict[str, Any]:
         """
@@ -483,3 +493,21 @@ class ChatbotService:
                 continue
 
         yield "The AI assistant service is currently unavailable. Please try again shortly."
+
+
+_chatbot_service_instance: Optional[ChatbotService] = None
+_chatbot_service_lock = threading.Lock()
+
+
+def get_chatbot_service() -> ChatbotService:
+    """
+    Thread-safe lazy singleton getter for ChatbotService.
+    Ensures ChatbotService is instantiated only when first endpoint is called.
+    """
+    global _chatbot_service_instance
+    if _chatbot_service_instance is None:
+        with _chatbot_service_lock:
+            if _chatbot_service_instance is None:
+                logger.info("Instantiating ChatbotService singleton...")
+                _chatbot_service_instance = ChatbotService()
+    return _chatbot_service_instance
