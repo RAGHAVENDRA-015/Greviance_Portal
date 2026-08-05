@@ -135,8 +135,8 @@ export default function CitizenDashboard() {
         className="relative overflow-hidden rounded-3xl gradient-primary p-6 text-white sm:p-8"
       >
         <div className="absolute inset-0 opacity-30 mesh-bg" />
-        <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold uppercase tracking-widest text-white/70">Citizen Portal</p>
             <h1 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">
               Welcome back, {firstName}
@@ -145,7 +145,7 @@ export default function CitizenDashboard() {
               Track your grievances, review AI insights, and file new issues in one place.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 shrink-0">
             <Link to={ROUTES.citizen.createComplaint}>
               <Button
                 leftIcon={<PlusCircle className="h-4 w-4" />}
@@ -256,17 +256,17 @@ export default function CitizenDashboard() {
               action={<List className="h-4 w-4 text-slate-400" />}
             />
             <div className="flex flex-col gap-3">
-              <Link to={ROUTES.citizen.createComplaint} className="block">
+              <Link to={ROUTES.citizen.createComplaint} className="block w-full">
                 <Button className="w-full" leftIcon={<PlusCircle className="h-4 w-4" />}>
                   File a complaint
                 </Button>
               </Link>
-              <Link to={ROUTES.citizen.complaints} className="block">
+              <Link to={ROUTES.citizen.complaints} className="block w-full">
                 <Button className="w-full" variant="outline" leftIcon={<FileText className="h-4 w-4" />}>
                   Browse my complaints
                 </Button>
               </Link>
-              <Link to={ROUTES.citizen.profile} className="block">
+              <Link to={ROUTES.citizen.profile} className="block w-full">
                 <Button className="w-full" variant="ghost">
                   Update profile
                 </Button>

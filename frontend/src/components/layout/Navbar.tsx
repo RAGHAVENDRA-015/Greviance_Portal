@@ -40,6 +40,16 @@ export function LandingNavbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
+
   const cycleTheme = () => {
     const next = mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'
     setMode(next)
@@ -48,93 +58,149 @@ export function LandingNavbar() {
   const ThemeIcon = mode === 'system' ? Monitor : resolved === 'dark' ? Moon : Sun
 
   return (
-    <header
-      className={cn(
-        'fixed inset-x-0 top-0 z-50 transition-all duration-300',
-        scrolled ? 'glass-strong py-2 shadow-lg' : 'bg-transparent py-4',
-      )}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-white font-bold">
-            G
-          </div>
-          <span className="font-heading text-lg font-bold tracking-tight">{APP_NAME}</span>
-        </Link>
+    <>
+      <header
+        className={cn(
+          'fixed inset-x-0 top-0 z-50 transition-all duration-300',
+          scrolled ? 'glass-strong py-2 shadow-lg' : 'bg-transparent py-4',
+        )}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-white font-bold">
+              G
+            </div>
+            <span className="font-heading text-lg font-bold tracking-tight">{APP_NAME}</span>
+          </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
-          {landingLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="group relative text-sm font-medium text-slate-600 transition hover:text-primary-600 dark:text-slate-300"
+          <nav className="hidden items-center gap-8 md:flex">
+            {landingLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="group relative text-sm font-medium text-slate-600 transition hover:text-primary-600 dark:text-slate-300"
+              >
+                {link.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 rounded-full bg-primary-500 transition-all group-hover:w-full" />
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={cycleTheme}
+              className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label="Toggle theme"
             >
-              {link.label}
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 rounded-full bg-primary-500 transition-all group-hover:w-full" />
-            </a>
-          ))}
-        </nav>
+              <ThemeIcon className="h-5 w-5" />
+            </button>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={cycleTheme}
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="Toggle theme"
-          >
-            <ThemeIcon className="h-5 w-5" />
-          </button>
-
-          {user ? (
-            <Button size="sm" onClick={() => navigate(getDashboardPath(user.role))}>
-              Dashboard
-            </Button>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigate(ROUTES.login)}>
-                Sign in
+            {user ? (
+              <Button size="sm" onClick={() => navigate(getDashboardPath(user.role))}>
+                Dashboard
               </Button>
-              <Button size="sm" onClick={() => navigate(ROUTES.register)}>
-                Get started
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigate(ROUTES.login)}>
+                  Sign in
+                </Button>
+                <Button size="sm" onClick={() => navigate(ROUTES.register)}>
+                  Get started
+                </Button>
+              </>
+            )}
 
-          <button
-            type="button"
-            className="rounded-xl p-2 md:hidden"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Open menu"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+            <button
+              type="button"
+              className="rounded-xl p-2 md:hidden"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
+      {/* ── Full-screen mobile drawer (rendered outside header so it truly covers everything) ── */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.nav
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-slate-200/60 dark:border-slate-700/60 md:hidden"
-          >
-            <div className="space-y-1 px-4 py-3">
-              {landingLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm md:hidden"
+              onClick={() => setMobileOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Drawer panel */}
+            <motion.div
+              key="drawer"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="fixed inset-y-0 left-0 z-[70] flex w-[85vw] max-w-xs flex-col bg-white dark:bg-slate-950 shadow-2xl md:hidden"
+            >
+              {/* Drawer header */}
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-4">
+                <Link to="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl gradient-primary text-white font-bold text-sm">
+                    G
+                  </div>
+                  <span className="font-heading text-base font-bold tracking-tight">{APP_NAME}</span>
+                </Link>
+                <button
+                  type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="block rounded-xl px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  aria-label="Close menu"
                 >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </motion.nav>
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Nav links */}
+              <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                {landingLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center rounded-xl px-4 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </nav>
+
+              {/* CTA buttons */}
+              <div className="border-t border-slate-200 dark:border-slate-800 px-4 py-5 space-y-3">
+                {user ? (
+                  <Button className="w-full" onClick={() => { navigate(getDashboardPath(user.role)); setMobileOpen(false) }}>
+                    Go to Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button className="w-full" onClick={() => { navigate(ROUTES.register); setMobileOpen(false) }}>
+                      Get Started
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => { navigate(ROUTES.login); setMobileOpen(false) }}>
+                      Sign In
+                    </Button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   )
 }
 
@@ -209,22 +275,56 @@ export function DashboardTopbar({ title }: { title: string }) {
                     Mark all read
                   </button>
                 </div>
-                <div className="max-h-64 space-y-2 overflow-y-auto">
+                <div className="max-h-72 space-y-1.5 overflow-y-auto pr-0.5">
                   {items.length === 0 ? (
                     <p className="px-2 py-6 text-center text-sm text-slate-500">No notifications</p>
                   ) : (
-                    items.slice(0, 8).map((n) => (
-                      <div
-                        key={n.id}
-                        className={cn(
-                          'rounded-xl px-3 py-2 text-sm',
-                          n.read ? 'opacity-60' : 'bg-primary-50 dark:bg-primary-950/30',
-                        )}
-                      >
-                        <p className="font-medium">{n.title}</p>
-                        <p className="text-xs text-slate-500">{n.message}</p>
-                      </div>
-                    ))
+                    items.slice(0, 10).map((n) => {
+                      const typeStyles = {
+                        success: 'border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/20',
+                        error:   'border-l-red-500 bg-red-50 dark:bg-red-950/20',
+                        warning: 'border-l-amber-500 bg-amber-50 dark:bg-amber-950/20',
+                        info:    'border-l-primary-500 bg-primary-50 dark:bg-primary-950/30',
+                      }
+                      const dotStyles = {
+                        success: 'bg-emerald-500',
+                        error:   'bg-red-500',
+                        warning: 'bg-amber-500',
+                        info:    'bg-primary-500',
+                      }
+                      const elapsed = (() => {
+                        const diffMs = Date.now() - new Date(n.createdAt).getTime()
+                        const mins = Math.floor(diffMs / 60_000)
+                        if (mins < 1) return 'Just now'
+                        if (mins < 60) return `${mins}m ago`
+                        const hrs = Math.floor(mins / 60)
+                        if (hrs < 24) return `${hrs}h ago`
+                        return `${Math.floor(hrs / 24)}d ago`
+                      })()
+                      return (
+                        <div
+                          key={n.id}
+                          className={cn(
+                            'rounded-xl border-l-4 px-3 py-2.5 text-sm transition-opacity',
+                            n.read ? 'opacity-50' : typeStyles[n.type] ?? typeStyles.info,
+                            n.read && 'border-l-slate-300 bg-slate-50 dark:bg-slate-800/30',
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                              {n.title}
+                            </p>
+                            <div className="flex shrink-0 items-center gap-1.5 mt-0.5">
+                              {!n.read && (
+                                <span className={cn('h-2 w-2 rounded-full shrink-0', dotStyles[n.type] ?? dotStyles.info)} />
+                              )}
+                            </div>
+                          </div>
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{n.message}</p>
+                          <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">{elapsed}</p>
+                        </div>
+                      )
+                    })
                   )}
                 </div>
               </motion.div>

@@ -50,7 +50,7 @@ export function Button({
       whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
       whileHover={{ y: disabled || loading ? 0 : -1 }}
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed max-w-full truncate',
         variants[variant],
         sizes[size],
         className,
@@ -58,9 +58,12 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : leftIcon}
-      {children}
-      {!loading && rightIcon}
+      {loading
+        ? <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+        : leftIcon && <span className="shrink-0">{leftIcon}</span>
+      }
+      <span className="truncate">{children}</span>
+      {!loading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
     </motion.button>
   )
 }

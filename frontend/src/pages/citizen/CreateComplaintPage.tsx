@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
@@ -36,6 +36,7 @@ import {
   ROUTES,
 } from '@/constants'
 import { getErrorMessage, cn } from '@/utils'
+import { useNotificationStore } from '@/store'
 import type { ComplaintCategory, ComplaintPriority } from '@/types'
 
 const schema = z.object({
@@ -140,7 +141,13 @@ export default function CreateComplaintPage() {
   const [images, setImages] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [dragOver, setDragOver] = useState(false)
-  const [step, setStep] = useState(1)
+  const [step, setStepState] = useState(1)
+  const stepEnteredAt = useRef(Date.now())
+
+  const setStep = useCallback((nextStep: number | ((s: number) => number)) => {
+    stepEnteredAt.current = Date.now()
+    setStepState(nextStep)
+  }, [])
 
   // Issue 3: track per-image validation errors
   const [imageErrors, setImageErrors] = useState<string[]>([])
@@ -245,26 +252,34 @@ export default function CreateComplaintPage() {
 
   const clearImageErrors = () => setImageErrors([])
 
+  const addNotification = useNotificationStore((s) => s.add)
+
   const mutation = useMutation({
     mutationFn: complaintsApi.create,
     onSuccess: (complaint) => {
       queryClient.invalidateQueries({ queryKey: ['complaints', 'my'] })
       toast.success('Complaint submitted successfully')
+      addNotification({
+        title: 'Complaint filed ✅',
+        message: `"${complaint.title}" has been submitted and is now pending review.`,
+        type: 'success',
+      })
       navigate(ROUTES.citizen.complaintDetail(complaint.id))
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Failed to submit complaint')),
   })
 
-  // Issue 4: guard — only allow submission when on Step 4 and not already pending
+  // Guard — only allow submission when on Step 4 and not immediately after transitioning
   const onSubmit = (values: FormValues) => {
     if (step !== 4) {
-      // Safety gate: should never reach here from steps 1–3, but prevents
-      // any keyboard/programmatic trigger from firing unexpectedly
       console.warn('[CreateComplaint] onSubmit triggered outside Step 4 — blocked')
       return
     }
+    if (Date.now() - stepEnteredAt.current < 300) {
+      console.warn('[CreateComplaint] onSubmit blocked — step 4 entered too recently (ghost click guard)')
+      return
+    }
     if (mutation.isPending) {
-      // Duplicate submission guard
       console.warn('[CreateComplaint] Submission already in progress — ignored')
       return
     }
@@ -643,6 +658,7 @@ export default function CreateComplaintPage() {
           </Button>
           {step < 4 ? (
             <Button
+              key="step-continue-btn"
               type="button"
               disabled={validatingImages}
               onClick={() => tryAdvanceStep(step + 1)}
@@ -650,8 +666,8 @@ export default function CreateComplaintPage() {
               {validatingImages ? 'Validating…' : 'Continue'}
             </Button>
           ) : (
-            // Issue 4 & 5: disabled when already submitting or Step 1 not complete
             <Button
+              key="step-submit-btn"
               type="submit"
               loading={mutation.isPending}
               disabled={mutation.isPending || !step1Complete}

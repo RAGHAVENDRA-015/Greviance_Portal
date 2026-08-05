@@ -114,8 +114,8 @@ export function DashboardLayout({ role }: { role: 'citizen' | 'officer' | 'admin
         </div>
       )}
 
-      <div className={cn('transition-all', collapsed ? 'lg:pl-[88px]' : 'lg:pl-64')}>
-        <div className="mx-auto max-w-7xl px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8">
+      <div className={cn('transition-all min-w-0 w-full overflow-x-hidden', collapsed ? 'lg:pl-[88px]' : 'lg:pl-64')}>
+        <div className="mx-auto max-w-7xl px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 min-w-0 overflow-x-hidden">
           <button
             type="button"
             className="mb-4 rounded-xl p-2 hover:bg-white/70 lg:hidden"

@@ -184,27 +184,32 @@ interface NotificationState {
   clear: () => void
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
-  items: [],
-  add: (item) =>
-    set((s) => ({
-      items: [
-        {
-          ...item,
-          id: crypto.randomUUID(),
-          read: false,
-          createdAt: new Date().toISOString(),
-        },
-        ...s.items,
-      ].slice(0, 50),
-    })),
-  markRead: (id) =>
-    set((s) => ({
-      items: s.items.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    })),
-  markAllRead: () => set((s) => ({ items: s.items.map((n) => ({ ...n, read: true })) })),
-  clear: () => set({ items: [] }),
-}))
+export const useNotificationStore = create<NotificationState>()(
+  persist(
+    (set) => ({
+      items: [],
+      add: (item) =>
+        set((s) => ({
+          items: [
+            {
+              ...item,
+              id: crypto.randomUUID(),
+              read: false,
+              createdAt: new Date().toISOString(),
+            },
+            ...s.items,
+          ].slice(0, 50),
+        })),
+      markRead: (id) =>
+        set((s) => ({
+          items: s.items.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        })),
+      markAllRead: () => set((s) => ({ items: s.items.map((n) => ({ ...n, read: true })) })),
+      clear: () => set({ items: [] }),
+    }),
+    { name: 'grievance-portal-notifications' },
+  ),
+)
 
 interface FilterState {
   search: string

@@ -15,7 +15,7 @@ export function Card({ children, className, hover = true, glass = true, onClick 
       onClick={onClick}
       whileHover={hover ? { y: -4, transition: { duration: 0.2 } } : undefined}
       className={cn(
-        'rounded-2xl p-5',
+        'rounded-2xl p-5 w-full min-w-0 overflow-hidden',
         glass ? 'glass' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm',
         onClick && 'cursor-pointer',
         className,

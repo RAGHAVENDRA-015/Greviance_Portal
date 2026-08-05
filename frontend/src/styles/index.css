@@ -34,12 +34,27 @@
 }
 
 @layer base {
+  /* ── Global overflow & min-width reset ──────────────────────────────
+     Flex/grid children have min-width:auto by default which causes them
+     to overflow narrow containers. Setting min-width:0 on every element
+     is the safest, battle-tested fix for card/button overflow issues.
+  ──────────────────────────────────────────────────────────────────── */
+  *,
+  *::before,
+  *::after {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-surface-muted text-slate-900 font-sans antialiased transition-colors duration-300;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   .dark body,
