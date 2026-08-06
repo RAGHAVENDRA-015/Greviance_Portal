@@ -143,6 +143,21 @@ class ComplaintService:
         return await Complaint.find(Complaint.citizen_id == citizen_id).sort(-Complaint.created_at).to_list()
 
     @staticmethod
+    async def get_recent_complaints_by_citizen(citizen_id: str, limit: int = 10) -> List[Complaint]:
+        """
+        Return the most recent N complaints for a citizen with a DB-level limit.
+
+        OPTIMIZATION (Phase 9): Uses .limit() on the MongoDB query instead of fetching
+        all documents and slicing in Python — avoids loading unbounded document sets.
+        """
+        return (
+            await Complaint.find(Complaint.citizen_id == citizen_id)
+            .sort(-Complaint.created_at)
+            .limit(limit)
+            .to_list()
+        )
+
+    @staticmethod
     async def get_complaints_by_department(department: str) -> List[Complaint]:
         """Return all complaints assigned to a specific department — Officer view."""
         return await Complaint.find(Complaint.department == department).sort(-Complaint.created_at).to_list()

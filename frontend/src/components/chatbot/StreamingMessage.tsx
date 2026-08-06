@@ -53,9 +53,11 @@ export const StreamingMessage: React.FC<StreamingMessageProps> = React.memo(({
 
   return (
     <div>
-      {/* Main response content with inline blinking cursor */}
+      {/* Main response content with inline blinking cursor.
+          OPTIMIZATION: passes isStreaming so MarkdownRenderer skips AST parsing
+          during the stream and only parses once when content is final. */}
       <div className="relative">
-        <MarkdownRenderer content={content} />
+        <MarkdownRenderer content={content} isStreaming={isStreaming} />
         <TypingCursor isVisible={isStreaming} />
       </div>
 

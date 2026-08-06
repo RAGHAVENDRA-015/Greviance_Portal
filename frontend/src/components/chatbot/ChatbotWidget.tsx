@@ -1,12 +1,11 @@
 /**
  * ChatbotWidget — Floating chatbot button + panel.
  *
- * Responsibilities (thin orchestrator):
- * - Manages open/close state of the chat panel
- * - Draft message persistence in localStorage
- * - AbortController signal handling & Escape key cancellation
- * - Clean, simple single-line Input field aligned with Send button
- * - Permanently stable sendMessage reference to guarantee suggestion chips work
+ * OPTIMIZATIONS (Phase 12):
+ * - Draft persistence debounced (300ms) to avoid a localStorage write on every keystroke.
+ * - useCallback deps tightened to prevent stale closure re-creation.
+ * - Input handler uses functional setState to avoid stale closure on inputMessage.
+ * - isStreaming exposed via ref (isStreamingRef) so callbacks stay stable forever.
  */
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -45,10 +44,18 @@ export const ChatbotWidget: React.FC = () => {
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Debounce timer ref for localStorage draft save
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Save input draft to localStorage
+  // Save input draft to localStorage — debounced 300ms to avoid writing on every keystroke
   useEffect(() => {
-    localStorage.setItem(DRAFT_KEY, inputMessage)
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current)
+    draftSaveTimerRef.current = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, inputMessage)
+    }, 300)
+    return () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current)
+    }
   }, [inputMessage])
 
   // Focus input when chat opens

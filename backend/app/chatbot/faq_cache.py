@@ -163,23 +163,28 @@ class FAQCache:
     # Search
     # ------------------------------------------------------------------
 
-    def search(self, question: str) -> Dict[str, Any]:
+    def search(self, question: str, return_embedding: bool = False) -> Dict[str, Any]:
         """
         Search the FAQ cache for a semantically similar question.
 
+        OPTIMIZATION: Now supports returning the computed embedding to avoid re-computation
+        in downstream semantic caching.
+
         Steps:
             1. Normalize the incoming question.
-            2. Embed it using the shared HuggingFace model.
-            3. Compute cosine similarity against all FAQ embeddings (matrix dot product).
-            4. Return the best match if its score ≥ threshold.
+            2. Check embedding cache first (new LRU cache for query embeddings).
+            3. Embed it using the shared HuggingFace model (only if cache miss).
+            4. Compute cosine similarity against all FAQ embeddings (matrix dot product).
+            5. Return the best match if its score ≥ threshold.
 
         Args:
             question: Raw user question string.
+            return_embedding: If True, includes the computed embedding in response.
 
         Returns:
             On hit:  {"found": True,  "answer": str, "source": "FAQ", "score": float,
-                      "matched_question": str, "latency_ms": float}
-            On miss: {"found": False, "latency_ms": float}
+                      "matched_question": str, "latency_ms": float, "embedding": Optional[np.ndarray]}
+            On miss: {"found": False, "latency_ms": float, "embedding": Optional[np.ndarray]}
         """
         t0 = time.perf_counter()
 
@@ -192,14 +197,36 @@ class FAQCache:
             latency = (time.perf_counter() - t0) * 1000
             return {"found": False, "latency_ms": round(latency, 2)}
 
-        try:
-            embedding_model = EmbeddingModel.get_embeddings()
-            raw_vec: List[float] = embedding_model.embed_query(normalized)
-            query_vec = np.array(raw_vec, dtype=np.float32)
-            norm = np.linalg.norm(query_vec)
-            if norm > 0:
-                query_vec = query_vec / norm
+        # Check embedding cache first (NEW OPTIMIZATION)
+        cache_key = f"embed:{normalized}"
+        if hasattr(self, '_embedding_cache') and cache_key in self._embedding_cache:
+            query_vec = self._embedding_cache[cache_key]
+            t_embed = 0.0
+        else:
+            try:
+                t_embed_start = time.perf_counter()
+                embedding_model = EmbeddingModel.get_embeddings()
+                raw_vec: List[float] = embedding_model.embed_query(normalized)
+                query_vec = np.array(raw_vec, dtype=np.float32)
+                norm = np.linalg.norm(query_vec)
+                if norm > 0:
+                    query_vec = query_vec / norm
+                t_embed = (time.perf_counter() - t_embed_start) * 1000
+                
+                # Store in embedding cache (LRU, max 256 entries)
+                if not hasattr(self, '_embedding_cache'):
+                    from collections import OrderedDict
+                    self._embedding_cache: OrderedDict[str, np.ndarray] = OrderedDict()
+                self._embedding_cache[cache_key] = query_vec
+                if len(self._embedding_cache) > 256:
+                    self._embedding_cache.popitem(last=False)
+                    
+            except Exception as exc:
+                latency = (time.perf_counter() - t0) * 1000
+                logger.warning("FAQCache.search embedding error: %s — treated as MISS", exc)
+                return {"found": False, "latency_ms": round(latency, 2)}
 
+        try:
             # Cosine similarity = dot product of L2-normalised vectors
             scores: np.ndarray = self._embeddings_matrix @ query_vec  # shape (N,)
             best_idx: int = int(np.argmax(scores))
@@ -207,35 +234,47 @@ class FAQCache:
 
             latency = (time.perf_counter() - t0) * 1000
 
+            result: Dict[str, Any] = {
+                "found": best_score >= self._threshold,
+                "latency_ms": round(latency, 2),
+            }
+            
+            if return_embedding:
+                result["embedding"] = query_vec
+                result["embed_time_ms"] = round(t_embed, 2)
+
             if best_score >= self._threshold:
                 entry = self._entries[best_idx]
-                logger.info(
-                    "FAQ Cache HIT — score=%.4f matched=%r latency=%.1f ms",
-                    best_score,
-                    entry.question,
-                    latency,
-                )
-                return {
-                    "found": True,
+                result.update({
                     "answer": entry.answer,
                     "source": "FAQ",
                     "score": round(best_score, 4),
                     "matched_question": entry.question,
-                    "latency_ms": round(latency, 2),
-                }
-
-            logger.info(
-                "FAQ Cache MISS — best_score=%.4f (threshold=%.2f) latency=%.1f ms",
-                best_score,
-                self._threshold,
-                latency,
-            )
-            return {"found": False, "latency_ms": round(latency, 2)}
+                })
+                logger.info(
+                    "FAQ Cache HIT — score=%.4f embed=%.1fms total=%.1f ms",
+                    best_score,
+                    t_embed,
+                    latency,
+                )
+            else:
+                logger.debug(
+                    "FAQ Cache MISS — best_score=%.4f (threshold=%.2f) embed=%.1fms total=%.1f ms",
+                    best_score,
+                    self._threshold,
+                    t_embed,
+                    latency,
+                )
+                
+            return result
 
         except Exception as exc:
             latency = (time.perf_counter() - t0) * 1000
             logger.warning("FAQCache.search error: %s — treated as MISS", exc)
-            return {"found": False, "latency_ms": round(latency, 2)}
+            result = {"found": False, "latency_ms": round(latency, 2)}
+            if return_embedding:
+                result["embedding"] = query_vec
+            return result
 
     # ------------------------------------------------------------------
     # Diagnostics

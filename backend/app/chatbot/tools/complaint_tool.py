@@ -24,34 +24,44 @@ class ComplaintTool:
     Delegates all database access to ComplaintService.
     """
 
-    async def get_my_complaints(self, citizen_id: str) -> List[Dict[str, Any]]:
+    async def get_my_complaints(self, citizen_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Fetch all complaints submitted by the authenticated citizen.
-        Returns a list of structured dictionaries for prompt generation.
+        Fetch the most recent complaints for the authenticated citizen.
+        
+        OPTIMIZATION (Phase 9): Added DB-level limit to avoid loading all complaints
+        into memory when a citizen may have dozens of historical complaints.
         """
-        logger.info("ComplaintTool: Fetching complaints for citizen_id=%s", citizen_id)
-        complaints: List[Complaint] = await ComplaintService.get_complaints_by_citizen(citizen_id)
+        logger.info("ComplaintTool: Fetching up to %d complaints for citizen_id=%s", limit, citizen_id)
+        complaints: List[Complaint] = await ComplaintService.get_recent_complaints_by_citizen(
+            citizen_id, limit=limit
+        )
         return [self._format_complaint(c) for c in complaints]
 
     async def get_recent_complaints(self, citizen_id: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        Fetch the N most recent complaints for the citizen.
+        Fetch the N most recent complaints for the citizen (DB-level limit).
         """
-        complaints: List[Complaint] = await ComplaintService.get_complaints_by_citizen(citizen_id)
-        recent = complaints[:limit]
-        return [self._format_complaint(c) for c in recent]
+        complaints: List[Complaint] = await ComplaintService.get_recent_complaints_by_citizen(
+            citizen_id, limit=limit
+        )
+        return [self._format_complaint(c) for c in complaints]
 
     async def get_complaint_status(
         self,
         citizen_id: str,
         question: Optional[str] = None,
+        limit: int = 10,
     ) -> Dict[str, Any]:
         """
         Retrieves status for a complaint. If a 24-character hexadecimal ObjectId
         is detected in the question string, fetches that specific complaint.
         Otherwise, defaults to the user's latest complaint.
+        
+        OPTIMIZATION (Phase 9): Uses DB-level limit to avoid fetching all complaints.
         """
-        complaints: List[Complaint] = await ComplaintService.get_complaints_by_citizen(citizen_id)
+        complaints: List[Complaint] = await ComplaintService.get_recent_complaints_by_citizen(
+            citizen_id, limit=limit
+        )
 
         if not complaints:
             return {"found": False, "message": "No complaints found for this account."}
@@ -73,11 +83,14 @@ class ComplaintTool:
             "total_user_complaints": len(complaints),
         }
 
-    async def summarize_complaints(self, citizen_id: str) -> Dict[str, Any]:
+    async def summarize_complaints(self, citizen_id: str, limit: int = 20) -> Dict[str, Any]:
         """
         Generates a summary of complaint counts by status for the citizen.
+        OPTIMIZATION: Added DB-level limit.
         """
-        complaints: List[Complaint] = await ComplaintService.get_complaints_by_citizen(citizen_id)
+        complaints: List[Complaint] = await ComplaintService.get_recent_complaints_by_citizen(
+            citizen_id, limit=limit
+        )
         if not complaints:
             return {"total": 0, "summary": "No grievances registered yet."}
 

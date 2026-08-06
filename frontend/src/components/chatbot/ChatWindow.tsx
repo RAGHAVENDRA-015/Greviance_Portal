@@ -7,8 +7,14 @@
  * - Pauses auto-scroll if user has manually scrolled upward (> 80px above bottom).
  * - Displays a floating "Scroll to bottom" button when user is scrolled up.
  * - Resumes auto-scroll automatically when user returns near bottom.
+ *
+ * OPTIMIZATIONS (Phase 12):
+ * - Message list keyed on msg.id — React reconciles only changed messages.
+ * - lastAssistantIdx computed with useMemo to avoid linear scan on every render.
+ * - handleScroll is stable via useCallback with no deps.
+ * - scrollToBottom is stable via useCallback.
  */
-import React, { useEffect, useRef, useCallback, useState } from 'react'
+import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import { MessageSquare, ArrowDown } from 'lucide-react'
 import { ChatMessage, type ChatMessageData } from './ChatMessage'
 
@@ -23,6 +29,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = React.memo(
     const bottomRef = useRef<HTMLDivElement>(null)
     const isUserScrollingUp = useRef(false)
     const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false)
+
+    // OPTIMIZATION: compute lastAssistantIdx once per messages change, not per render
+    const lastAssistantIdx = useMemo(
+      () =>
+        messages.reduce(
+          (acc, msg, idx) => (msg.role === 'assistant' ? idx : acc),
+          -1,
+        ),
+      [messages],
+    )
 
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
       if (behavior === 'instant') {
@@ -75,11 +91,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = React.memo(
         </div>
       )
     }
-
-    const lastAssistantIdx = messages.reduce(
-      (acc, msg, idx) => (msg.role === 'assistant' ? idx : acc),
-      -1,
-    )
 
     return (
       <div className="relative flex-1 min-h-0 flex flex-col">
