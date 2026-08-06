@@ -1,0 +1,134 @@
+[
+  {
+    "question": "How do I file a new complaint?",
+    "answer": "To file a new complaint, log in to the portal and click the 'New Complaint' button on your dashboard. Fill in the title, description, location, and upload photo evidence if available. The AI will automatically classify your complaint and assign it to the appropriate department."
+  },
+  {
+    "question": "How can I track my complaint status?",
+    "answer": "You can track your complaint status by visiting the 'My Complaints' section in your dashboard. Each complaint shows its current status: Pending, In Progress, Resolved, or Rejected. You will also see the assigned officer and any resolution notes added."
+  },
+  {
+    "question": "What does Pending status mean?",
+    "answer": "A 'Pending' status means your complaint has been successfully submitted and is awaiting assignment to an officer. Typically complaints are assigned within 24-48 hours of submission."
+  },
+  {
+    "question": "What does In Progress status mean?",
+    "answer": "An 'In Progress' status means an officer has been assigned and is actively working to resolve your complaint. You can see the assigned officer's name and any progress notes in the complaint details."
+  },
+  {
+    "question": "What does Resolved status mean?",
+    "answer": "A 'Resolved' status means your complaint has been addressed and closed. The officer will have added resolution notes explaining what action was taken. You can view the full resolution details in your complaint history."
+  },
+  {
+    "question": "What does Rejected status mean?",
+    "answer": "A 'Rejected' status means the complaint could not be processed, often due to insufficient information, being outside the department's jurisdiction, or being a duplicate. The rejection reason is provided in the complaint details."
+  },
+  {
+    "question": "How long does it take to resolve a complaint?",
+    "answer": "Resolution time depends on the priority level. High priority complaints are typically resolved within 3-5 working days, medium priority within 7-10 days, and low priority within 14-21 days. Complex infrastructure issues may take longer."
+  },
+  {
+    "question": "Which department handles road issues?",
+    "answer": "Road and infrastructure complaints are handled by the Public Works Department (PWD). This includes potholes, broken roads, damaged pavements, street lights, and traffic signal issues."
+  },
+  {
+    "question": "Which department handles water supply problems?",
+    "answer": "Water supply complaints including low pressure, pipe leaks, contaminated water, and no water supply are handled by the Water Works Department or Municipal Water Supply Board."
+  },
+  {
+    "question": "Which department handles drainage and sewage?",
+    "answer": "Drainage and sewage issues such as blocked drains, sewage overflow, and flooding are managed by the Drainage Department or Urban Local Body (ULB)."
+  },
+  {
+    "question": "Which department handles electricity issues?",
+    "answer": "Power outages, electrical faults, broken street lights, and transformer issues are handled by the Electricity Department or local DISCOM (Distribution Company)."
+  },
+  {
+    "question": "How do I upload photo evidence?",
+    "answer": "While filing a complaint, you can attach up to 5 photos as evidence. Click the upload area or drag and drop images. Accepted formats are JPG, PNG, and WEBP with a maximum size of 10MB per image. The AI will verify that images are relevant to your complaint."
+  },
+  {
+    "question": "What image formats are accepted for evidence?",
+    "answer": "The portal accepts JPG, JPEG, PNG, and WEBP image formats for complaint evidence. Each image must be under 10MB in size and you can attach up to 5 images per complaint."
+  },
+  {
+    "question": "Can I edit a complaint after submitting?",
+    "answer": "Once a complaint is submitted, you cannot edit its core details (title, description, location) to maintain complaint integrity. However, you can add additional notes or contact the assigned officer through the portal's messaging feature."
+  },
+  {
+    "question": "Can I re-file a rejected complaint?",
+    "answer": "Yes, you can re-file a complaint that was rejected. Read the rejection reason carefully, address the issues mentioned, and submit a new complaint with additional details or evidence to support your case."
+  },
+  {
+    "question": "How does AI classify my complaint automatically?",
+    "answer": "When you submit a complaint, the portal's Gemini AI analyzes your title and description to automatically determine the complaint category, priority level, and the most appropriate government department to handle it. This ensures faster routing without manual review."
+  },
+  {
+    "question": "What types of issues can I report?",
+    "answer": "You can report a wide range of civic issues including: road damage, water supply problems, drainage/sewage, electricity outages, garbage collection, public property damage, noise pollution, illegal construction, corruption, and other municipal service failures."
+  },
+  {
+    "question": "What happens after I submit a complaint?",
+    "answer": "After submission, your complaint is: (1) AI-classified and routed to the correct department, (2) Assigned to an officer within 24-48 hours, (3) Investigated by the officer, (4) Resolved or escalated. You can track every step in your dashboard."
+  },
+  {
+    "question": "How do I report a corruption issue?",
+    "answer": "Corruption complaints can be filed through the portal by selecting 'Corruption / Bribery' as the category. These complaints are treated with high priority and routed directly to the Vigilance Department. You can file anonymously if needed."
+  },
+  {
+    "question": "What is the difference between Pending and In Progress?",
+    "answer": "'Pending' means your complaint is submitted but not yet assigned to an officer. 'In Progress' means an officer has accepted responsibility and is actively working on resolving the issue."
+  },
+  {
+    "question": "Who is assigned to resolve my complaint?",
+    "answer": "You can see the assigned officer's name and department in the complaint detail page. Officers are assigned based on their workload, department, and complaint category to ensure efficient resolution."
+  },
+  {
+    "question": "How many complaints can I submit?",
+    "answer": "There is no limit to the number of complaints you can submit. However, please ensure each complaint is unique and provides sufficient detail to avoid rejection or duplication."
+  },
+  {
+    "question": "Can I check my past complaints?",
+    "answer": "Yes, your complete complaint history is available in the 'My Complaints' section. You can filter by status, date, or category and view full details, officer notes, and resolution history for each complaint."
+  },
+  {
+    "question": "How do I know when my complaint is resolved?",
+    "answer": "When your complaint is resolved, the status will change to 'Resolved' in your dashboard. The officer will add resolution notes describing what action was taken. You can review the full resolution in the complaint detail page."
+  },
+  {
+    "question": "What resolution notes will the officer add?",
+    "answer": "Officers add notes describing the actions taken to resolve your complaint, such as repair work completed, service restored, or escalation details. These notes are visible in the complaint detail page under 'Resolution Notes'."
+  },
+  {
+    "question": "How do I add more details to an existing complaint?",
+    "answer": "You can contact the assigned officer through the portal messaging feature to provide additional information. For critical updates, you may need to file a new complaint referencing the original complaint ID."
+  },
+  {
+    "question": "Which complaints are still pending?",
+    "answer": "In the 'My Complaints' section, use the Status filter and select 'Pending' to view all your pending complaints. Pending complaints are awaiting officer assignment."
+  },
+  {
+    "question": "How do I view my complaint history?",
+    "answer": "Your complete complaint history is accessible from the 'My Complaints' page in your dashboard. All complaints you have ever filed are listed there with their current status, timestamps, and details."
+  },
+  {
+    "question": "What is the grievance portal?",
+    "answer": "The Citizen Grievance Portal is an AI-powered digital platform that allows citizens to report civic issues, track their complaints, and communicate with government officers. It uses AI to automatically classify complaints and route them to the correct department for faster resolution."
+  },
+  {
+    "question": "How do I login to the portal?",
+    "answer": "Click 'Login' on the portal homepage and enter your registered email and password. If you don't have an account, click 'Register' to create one with your email address."
+  },
+  {
+    "question": "How do I register on the portal?",
+    "answer": "Click 'Register' on the portal homepage. Enter your full name, email address, and a secure password. Verify your email to activate your account and start filing complaints."
+  },
+  {
+    "question": "How do I reset my password?",
+    "answer": "Click 'Forgot Password' on the login page and enter your registered email. A password reset link will be sent to your email. Follow the link to set a new password."
+  },
+  {
+    "question": "What is high priority complaint?",
+    "answer": "High priority complaints involve urgent civic issues that pose public safety risks, such as major road accidents, burst water mains, electrical hazards, or structural damage. These are resolved within 3-5 working days."
+  }
+]

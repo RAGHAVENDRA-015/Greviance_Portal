@@ -38,6 +38,7 @@ firebase/
 !package-lock.json
 !tsconfig.json
 !tsconfig.*.json
+!app/data/faqs.json
 
 # ============================================================
 # IDE / Editor
