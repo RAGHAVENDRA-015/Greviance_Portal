@@ -32,6 +32,7 @@ class Settings(BaseSettings):
         "https://greviance-portal-kappa.vercel.app"
     )
     GOOGLE_MAPS_API_KEY: Optional[str] = None
+    HF_TOKEN: Optional[str] = None
 
     # ── Caching & FAQ Configuration ────────────────────────────────────
     FAQ_SIMILARITY_THRESHOLD: float = 0.90

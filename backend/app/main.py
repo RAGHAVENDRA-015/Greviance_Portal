@@ -57,9 +57,10 @@ async def lifespan(app: FastAPI):
         raise
 
     # Warm up chatbot subsystems in background — FAQ cache, Response cache, FAISS vector store.
-    # This eliminates cold-start delay on the first user request.
+    # This eliminates cold-start delay on the first user request without blocking app startup.
     async def _warmup_chatbot():
         try:
+            import gc
             from app.chatbot.service import get_chatbot_service
             from app.chatbot.faq_cache import FAQCache
             from app.chatbot.response_cache import ResponseCache
@@ -79,11 +80,13 @@ async def lifespan(app: FastAPI):
                 settings.FAQ_SIMILARITY_THRESHOLD,
             )
             logger.info("FAQCache loaded with %d entries.", faq_cache.size)
+            gc.collect()
 
             # 3. Pre-warm FAISS vector store retriever
             service = get_chatbot_service()
             await asyncio.to_thread(service.retriever.retrieve, "warmup portal")
             logger.info("Chatbot FAISS vector store pre-warmed successfully.")
+            gc.collect()
 
             # 4. Pre-warm Gemini API connection
             try:
@@ -92,13 +95,15 @@ async def lifespan(app: FastAPI):
             except Exception as gem_exc:
                 logger.debug("Gemini pre-warm ping notice: %s", gem_exc)
 
+            gc.collect()
+            logger.info("All AI chatbot subsystems pre-warmed successfully.")
 
         except Exception as exc:
             logger.warning("Chatbot warmup partial failure (non-fatal): %s", exc)
 
-    await _warmup_chatbot()
+    asyncio.create_task(_warmup_chatbot())
 
-    logger.info("Application startup complete. All AI chatbot subsystems pre-warmed.")
+    logger.info("Application startup complete. Web server ready to handle requests.")
 
     try:
         yield
