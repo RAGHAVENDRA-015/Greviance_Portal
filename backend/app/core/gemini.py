@@ -15,15 +15,14 @@ from app.core.config import settings
 
 gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-# Primary model — high throughput, fast vision and text
-GEMINI_MODEL = "gemini-3.5-flash"
+# Primary model — high throughput, fast response times and generous rate limits
+GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
 
 # Verified fallback models in priority order for resilience and sub-second latency
 GEMINI_FALLBACK_MODELS: list[str] = [
-    "gemini-3.1-flash-lite-preview",
+    "gemini-flash-lite-latest",
     "gemini-3.6-flash",
-    "gemini-3.5-flash",
+    "gemini-flash-latest",
     "gemini-3.5-flash-lite",
-    "gemini-3-flash-preview",
+    "gemini-3.5-flash",
 ]
-

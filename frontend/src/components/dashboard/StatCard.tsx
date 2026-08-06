@@ -1,3 +1,4 @@
+import React from 'react'
 import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { cn, percent } from '@/utils'
@@ -20,7 +21,7 @@ const colorMap = {
   red: 'from-red-500 to-red-600 shadow-red-500/25',
 }
 
-export function StatCard({ title, value, icon: Icon, trend, color = 'blue', delay = 0 }: StatCardProps) {
+export const StatCard = React.memo(function StatCard({ title, value, icon: Icon, trend, color = 'blue', delay = 0 }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -48,9 +49,9 @@ export function StatCard({ title, value, icon: Icon, trend, color = 'blue', dela
       </div>
     </motion.div>
   )
-}
+})
 
-export function ProgressRing({
+export const ProgressRing = React.memo(function ProgressRing({
   value,
   total,
   label,
@@ -87,4 +88,4 @@ export function ProgressRing({
       <p className="mt-8 text-xs text-slate-500">{label}</p>
     </div>
   )
-}
+})

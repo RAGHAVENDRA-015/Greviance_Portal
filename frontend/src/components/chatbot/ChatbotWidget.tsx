@@ -2,23 +2,22 @@
  * ChatbotWidget — Floating chatbot button + panel.
  *
  * Responsibilities (thin orchestrator):
- * - Manages the open/close state of the chat panel
- * - Manages the messages array (user + assistant)
- * - Calls streamChat() from api/chatbot.ts
- * - Passes AbortController signal for cancellation when widget closes mid-stream
- * - Delegates all rendering to ChatWindow and sub-components
- *
- * Data shape for each message: ChatMessageData (id, role, content, sources,
- * suggestions, isStreaming, timestamp)
+ * - Manages open/close state of the chat panel
+ * - Draft message persistence in localStorage
+ * - AbortController signal handling & Escape key cancellation
+ * - Clean, simple single-line Input field aligned with Send button
+ * - Permanently stable sendMessage reference to guarantee suggestion chips work
  */
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react'
+import { Bot, X, Send, Square, Sparkles } from 'lucide-react'
 import { streamChat } from '@/api/chatbot'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ChatWindow } from './ChatWindow'
 import type { ChatMessageData } from './ChatMessage'
+
+const DRAFT_KEY = 'grievance-portal-chat-draft'
 
 const WELCOME_MESSAGE: ChatMessageData = {
   id: 'welcome-1',
@@ -37,12 +36,27 @@ const WELCOME_MESSAGE: ChatMessageData = {
 
 export const ChatbotWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [inputMessage, setInputMessage] = useState('')
+  const [inputMessage, setInputMessage] = useState(() => localStorage.getItem(DRAFT_KEY) || '')
   const [isStreaming, setIsStreaming] = useState(false)
   const [messages, setMessages] = useState<ChatMessageData[]>([WELCOME_MESSAGE])
 
-  // AbortController ref — cancelled when widget closes or new message starts
+  const isStreamingRef = useRef(false)
+  isStreamingRef.current = isStreaming
+
   const abortControllerRef = useRef<AbortController | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Save input draft to localStorage
+  useEffect(() => {
+    localStorage.setItem(DRAFT_KEY, inputMessage)
+  }, [inputMessage])
+
+  // Focus input when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 150)
+    }
+  }, [isOpen])
 
   /** Cancel any in-flight stream */
   const cancelStream = useCallback(() => {
@@ -50,24 +64,42 @@ export const ChatbotWidget: React.FC = () => {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
     }
+    setIsStreaming(false)
   }, [])
 
   const handleClose = useCallback(() => {
     cancelStream()
     setIsOpen(false)
-    // Mark any streaming message as done (so cursor disappears on reopen)
     setMessages((prev) =>
       prev.map((msg) => (msg.isStreaming ? { ...msg, isStreaming: false } : msg)),
     )
   }, [cancelStream])
 
+  // Global Escape key listener to close panel or stop generation
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isStreamingRef.current) {
+          cancelStream()
+        } else if (isOpen) {
+          handleClose()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [isOpen, cancelStream, handleClose])
+
+  // Permanently stable sendMessage callback using isStreamingRef
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim()
-      if (!trimmed || isStreaming) return
+      if (!trimmed || isStreamingRef.current) return
 
-      // Cancel any previous stream
-      cancelStream()
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+        abortControllerRef.current = null
+      }
 
       const userMsgId = `user-${Date.now()}`
       const assistantMsgId = `asst-${Date.now() + 1}`
@@ -94,6 +126,7 @@ export const ChatbotWidget: React.FC = () => {
 
       setMessages((prev) => [...prev, userMessage, assistantPlaceholder])
       setInputMessage('')
+      localStorage.removeItem(DRAFT_KEY)
       setIsStreaming(true)
 
       const controller = new AbortController()
@@ -142,7 +175,7 @@ export const ChatbotWidget: React.FC = () => {
         abortControllerRef.current = null
       }
     },
-    [isStreaming, cancelStream],
+    [],
   )
 
   const handleFormSubmit = useCallback(
@@ -155,7 +188,7 @@ export const ChatbotWidget: React.FC = () => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter') {
         e.preventDefault()
         sendMessage(inputMessage)
       }
@@ -218,6 +251,7 @@ export const ChatbotWidget: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleClose}
                 className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
                 aria-label="Close chat"
@@ -232,13 +266,14 @@ export const ChatbotWidget: React.FC = () => {
               onSuggestionSelect={sendMessage}
             />
 
-            {/* ── Input Bar ── */}
+            {/* ── Clean & Simple Input Bar ── */}
             <form
               onSubmit={handleFormSubmit}
               className="border-t border-slate-200/70 dark:border-slate-800/80 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0"
             >
               <div className="flex items-center gap-2">
                 <Input
+                  ref={inputRef}
                   id="chatbot-input"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
@@ -249,19 +284,28 @@ export const ChatbotWidget: React.FC = () => {
                   className="rounded-2xl bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-sm focus-visible:ring-primary-500"
                   aria-label="Chat input"
                 />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!inputMessage.trim() || isStreaming}
-                  className="rounded-2xl h-10 w-10 p-0 shrink-0 gradient-primary text-white shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label="Send message"
-                >
-                  {isStreaming ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
+                {isStreaming ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={cancelStream}
+                    className="rounded-2xl h-10 w-10 p-0 shrink-0 bg-red-500 hover:bg-red-600 text-white shadow-md"
+                    aria-label="Stop generating"
+                    title="Stop generating"
+                  >
+                    <Square className="h-4 w-4 fill-white" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!inputMessage.trim()}
+                    className="rounded-2xl h-10 w-10 p-0 shrink-0 gradient-primary text-white shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Send message"
+                  >
                     <Send className="h-4 w-4" />
-                  )}
-                </Button>
+                  </Button>
+                )}
               </div>
             </form>
           </motion.div>

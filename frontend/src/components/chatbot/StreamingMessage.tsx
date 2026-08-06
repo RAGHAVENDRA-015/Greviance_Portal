@@ -9,9 +9,7 @@
  * │ [MessageActions: copy button]           │
  * └─────────────────────────────────────────┘
  *
- * - During streaming: shows content + blinking cursor, hides sources/suggestions/actions
- * - After streaming: hides cursor, reveals sources, suggestions, and copy button
- * - Greeting messages: no sources/suggestions strip
+ * Wrapped in React.memo so non-streaming assistant messages stay completely stable during active SSE streams.
  */
 import React from 'react'
 import { Loader2 } from 'lucide-react'
@@ -32,13 +30,14 @@ interface StreamingMessageProps extends AssistantMessageData {
   onSuggestionSelect: (question: string) => void
 }
 
-export const StreamingMessage: React.FC<StreamingMessageProps> = ({
+export const StreamingMessage: React.FC<StreamingMessageProps> = React.memo(({
   content,
   suggestions,
   isStreaming,
   isLatest,
   onSuggestionSelect,
 }) => {
+
   // Empty placeholder while Gemini hasn't sent the first token yet
   if (!content && isStreaming) {
     return (
@@ -60,7 +59,7 @@ export const StreamingMessage: React.FC<StreamingMessageProps> = ({
         <TypingCursor isVisible={isStreaming} />
       </div>
 
-      {/* Sources + suggestions + copy — only after full response */}
+      {/* Suggestions + copy — only after full response */}
       {showMetadata && (
         <>
           {showSuggestions && (
@@ -69,6 +68,9 @@ export const StreamingMessage: React.FC<StreamingMessageProps> = ({
           <MessageActions content={content} />
         </>
       )}
+
     </div>
   )
-}
+})
+
+StreamingMessage.displayName = 'StreamingMessage'

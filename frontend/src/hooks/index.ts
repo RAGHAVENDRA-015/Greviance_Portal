@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useFilterStore } from '@/store'
 import type { Complaint } from '@/types'
 
@@ -15,26 +15,32 @@ export function useFilteredComplaints(complaints: Complaint[] | undefined) {
   const { search, status, category } = useFilterStore()
   const q = useDebouncedValue(search.toLowerCase().trim())
 
-  if (!complaints) return []
+  return useMemo(() => {
+    if (!complaints) return []
 
-  return complaints.filter((c) => {
-    const matchesSearch =
-      !q ||
-      c.title.toLowerCase().includes(q) ||
-      c.description.toLowerCase().includes(q) ||
-      c.department?.toLowerCase().includes(q) ||
-      c.category?.toLowerCase().includes(q)
-    const matchesStatus = status === 'all' || c.status === status
-    const matchesCategory = category === 'all' || c.category === category
-    return matchesSearch && matchesStatus && matchesCategory
-  })
+    return complaints.filter((c) => {
+      const matchesSearch =
+        !q ||
+        c.title.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.department?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q)
+      const matchesStatus = status === 'all' || c.status === status
+      const matchesCategory = category === 'all' || c.category === category
+      return matchesSearch && matchesStatus && matchesCategory
+    })
+  }, [complaints, q, status, category])
 }
 
 export function usePagination<T>(items: T[], pageSize = 8) {
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(items.length / pageSize)), [items.length, pageSize])
   const safePage = Math.min(page, totalPages)
-  const slice = items.slice((safePage - 1) * pageSize, safePage * pageSize)
+  
+  const slice = useMemo(
+    () => items.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [items, safePage, pageSize],
+  )
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages)

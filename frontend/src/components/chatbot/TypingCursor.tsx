@@ -9,7 +9,9 @@ interface TypingCursorProps {
   isVisible: boolean
 }
 
-export const TypingCursor: React.FC<TypingCursorProps> = ({ isVisible }) => {
+export const TypingCursor: React.FC<TypingCursorProps> = React.memo(({ isVisible }) => {
   if (!isVisible) return null
   return <span className="cursor-blink" aria-hidden="true" />
-}
+})
+
+TypingCursor.displayName = 'TypingCursor'

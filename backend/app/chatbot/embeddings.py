@@ -37,12 +37,22 @@ class EmbeddingModel:
 
                     from langchain_huggingface import HuggingFaceEmbeddings
 
-                    cls._embeddings = HuggingFaceEmbeddings(
-                        model_name=EMBEDDING_MODEL,
-                        model_kwargs={"device": "cpu"},
-                        encode_kwargs={"normalize_embeddings": True},
-                    )
+                    try:
+                        cls._embeddings = HuggingFaceEmbeddings(
+
+                            model_name=EMBEDDING_MODEL,
+                            model_kwargs={"device": "cpu", "local_files_only": True},
+                            encode_kwargs={"normalize_embeddings": True},
+                        )
+                    except Exception as offline_exc:
+                        logger.info("Local embedding model not found (%s), fetching from online hub...", offline_exc)
+                        cls._embeddings = HuggingFaceEmbeddings(
+                            model_name=EMBEDDING_MODEL,
+                            model_kwargs={"device": "cpu"},
+                            encode_kwargs={"normalize_embeddings": True},
+                        )
                     gc.collect()
+
                     logger.info("HuggingFace embedding model initialized successfully.")
 
         return cls._embeddings

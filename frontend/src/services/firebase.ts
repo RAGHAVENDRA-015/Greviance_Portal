@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import {
   getAuth,
+  initializeAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -9,6 +10,8 @@ import {
   onIdTokenChanged,
   setPersistence,
   browserLocalPersistence,
+  indexedDBLocalPersistence,
+  inMemoryPersistence,
   type User as FirebaseUser,
   type AuthError,
 } from 'firebase/auth'
@@ -41,12 +44,35 @@ const firebaseConfig = readFirebaseConfig()
 /** Singleton Firebase app — never initialize twice. */
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
 
-export const auth = getAuth(app)
+/** Initialize Auth with multi-tier persistence fallback */
+export const auth = (() => {
+  try {
+    return getAuth(app)
+  } catch {
+    return initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
+    })
+  }
+})()
 
-/** Ensure auth survives browser refresh (local persistence). */
-const persistenceReady = setPersistence(auth, browserLocalPersistence).catch(() => {
-  // Persistence failures are non-fatal; auth still works for the session.
+/** Ensure auth survives browser refresh with silent error fallback. */
+const persistenceReady = setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn('Firebase persistence initialization non-fatal warning:', err)
 })
+
+/** Global handler to catch non-fatal browser IndexedDB lifecycle errors during tab freeze/backgrounding */
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (
+      event.reason &&
+      typeof event.reason.message === 'string' &&
+      (event.reason.message.includes('Database is closing/hidden') ||
+       event.reason.message.includes('IndexedDB'))
+    ) {
+      event.preventDefault()
+    }
+  })
+}
 
 export async function registerWithEmail(email: string, password: string, displayName: string) {
   await persistenceReady
@@ -74,15 +100,25 @@ export async function resetPassword(email: string) {
 }
 
 export async function getIdToken(forceRefresh = false) {
-  await persistenceReady
-  const user = auth.currentUser
-  if (!user) return null
-  return user.getIdToken(forceRefresh)
+  try {
+    await persistenceReady
+    const user = auth.currentUser
+    if (!user) return null
+    return await user.getIdToken(forceRefresh)
+  } catch (err) {
+    console.warn('getIdToken warning:', err)
+    return null
+  }
 }
 
 export function subscribeToAuth(callback: (user: FirebaseUser | null) => void) {
-  // This also fires after Firebase refreshes an ID token in a long-lived tab.
-  return onIdTokenChanged(auth, callback)
+  return onIdTokenChanged(
+    auth,
+    (user) => callback(user),
+    (error) => {
+      console.warn('Firebase auth state listener warning:', error)
+    },
+  )
 }
 
 export function isFirebaseAuthError(error: unknown): error is AuthError {

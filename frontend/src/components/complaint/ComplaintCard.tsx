@@ -1,3 +1,4 @@
+import React from 'react'
 import { Link } from 'react-router-dom'
 import { MapPin, Sparkles, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
@@ -10,7 +11,7 @@ interface ComplaintCardProps {
   href: string
 }
 
-export function ComplaintCard({ complaint, href }: ComplaintCardProps) {
+export const ComplaintCard = React.memo(function ComplaintCard({ complaint, href }: ComplaintCardProps) {
   return (
     <Link to={href}>
       <Card className="h-full">
@@ -59,4 +60,4 @@ export function ComplaintCard({ complaint, href }: ComplaintCardProps) {
       </Card>
     </Link>
   )
-}
+})

@@ -33,6 +33,17 @@ class Settings(BaseSettings):
     )
     GOOGLE_MAPS_API_KEY: Optional[str] = None
 
+    # ── Caching & FAQ Configuration ────────────────────────────────────
+    FAQ_SIMILARITY_THRESHOLD: float = 0.90
+    CACHE_MAX_SIZE: int = 500
+    CACHE_TTL_SECONDS: int = 86400  # 24 hours
+
+    # ── Debug / Observability ─────────────────────────────────────────
+    DEBUG: bool = False
+
+    # ── FAQ data file path (relative to BACKEND_DIR or absolute) ──────
+    FAQ_DATA_PATH: str = "app/data/faqs.json"
+
     @property
     def allowed_origins(self) -> List[str]:
         return [
@@ -40,6 +51,14 @@ class Settings(BaseSettings):
             for origin in self.ALLOWED_ORIGINS.split(",")
             if origin.strip()
         ]
+
+    @property
+    def faq_data_path_resolved(self) -> Path:
+        """Return the absolute path to the FAQ data file."""
+        p = Path(self.FAQ_DATA_PATH)
+        if p.is_absolute():
+            return p
+        return BACKEND_DIR / p
 
 
 settings = Settings()

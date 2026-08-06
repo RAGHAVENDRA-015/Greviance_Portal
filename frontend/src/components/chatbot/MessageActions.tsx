@@ -15,7 +15,7 @@ interface MessageActionsProps {
   content: string
 }
 
-export const MessageActions: React.FC<MessageActionsProps> = ({ content }) => {
+export const MessageActions: React.FC<MessageActionsProps> = React.memo(({ content }) => {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
@@ -31,6 +31,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ content }) => {
   return (
     <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50">
       <button
+        type="button"
         onClick={handleCopy}
         className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
         aria-label="Copy response"
@@ -49,4 +50,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ content }) => {
       </button>
     </div>
   )
-}
+})
+
+MessageActions.displayName = 'MessageActions'

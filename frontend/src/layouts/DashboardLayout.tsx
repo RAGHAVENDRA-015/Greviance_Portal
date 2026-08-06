@@ -1,4 +1,4 @@
-import { Outlet, Navigate } from 'react-router-dom'
+import { Outlet, Navigate, Link, NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -15,8 +15,8 @@ import { useAuthStore, useSidebarStore } from '@/store'
 import { SidebarNav, DashboardTopbar } from '@/components/layout/Navbar'
 import { APP_NAME, ROUTES } from '@/constants'
 import { cn } from '@/utils'
-import { Link } from 'react-router-dom'
 import { ChatbotWidget } from '@/components/chatbot'
+
 
 const citizenNav = [
   { to: ROUTES.citizen.dashboard, label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -87,14 +87,22 @@ export function DashboardLayout({ role }: { role: 'citizen' | 'officer' | 'admin
         {collapsed ? (
           <nav className="space-y-1">
             {nav.map((item) => (
-              <Link
+              <NavLink
                 key={item.to}
                 to={item.to}
+                end
                 title={item.label}
-                className="flex items-center justify-center rounded-xl p-3 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center justify-center rounded-xl p-3 transition',
+                    isActive
+                      ? 'gradient-primary text-white shadow-lg shadow-primary-500/20'
+                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+                  )
+                }
               >
                 {item.icon}
-              </Link>
+              </NavLink>
             ))}
           </nav>
         ) : (
@@ -134,18 +142,27 @@ export function DashboardLayout({ role }: { role: 'citizen' | 'officer' | 'admin
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 lg:hidden">
           <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
             {mobileCitizen.map((item) => (
-              <Link
+              <NavLink
                 key={item.to}
                 to={item.to}
-                className="flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-medium text-slate-500"
+                end
+                className={({ isActive }) =>
+                  cn(
+                    'flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-medium transition',
+                    isActive
+                      ? 'text-primary-600 font-semibold dark:text-primary-400'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
+                  )
+                }
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}
-              </Link>
+              </NavLink>
             ))}
           </div>
         </nav>
       )}
+
 
       <ChatbotWidget />
     </div>

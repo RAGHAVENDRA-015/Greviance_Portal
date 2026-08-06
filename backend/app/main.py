@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -55,7 +56,50 @@ async def lifespan(app: FastAPI):
         logger.critical("Failed to initialize MongoDB: %s", exc)
         raise
 
-    logger.info("Application startup complete. Ready to receive requests.")
+    # Warm up chatbot subsystems in background — FAQ cache, Response cache, FAISS vector store.
+    # This eliminates cold-start delay on the first user request.
+    async def _warmup_chatbot():
+        try:
+            from app.chatbot.service import get_chatbot_service
+            from app.chatbot.faq_cache import FAQCache
+            from app.chatbot.response_cache import ResponseCache
+
+            # 1. Initialize ResponseCache singleton
+            ResponseCache.get_instance(
+                max_size=settings.CACHE_MAX_SIZE,
+                ttl_seconds=settings.CACHE_TTL_SECONDS,
+            )
+            logger.info("ResponseCache singleton initialized.")
+
+            # 2. Load FAQCache with pre-computed embeddings
+            faq_cache = FAQCache.get_instance()
+            await asyncio.to_thread(
+                faq_cache.load,
+                settings.faq_data_path_resolved,
+                settings.FAQ_SIMILARITY_THRESHOLD,
+            )
+            logger.info("FAQCache loaded with %d entries.", faq_cache.size)
+
+            # 3. Pre-warm FAISS vector store retriever
+            service = get_chatbot_service()
+            await asyncio.to_thread(service.retriever.retrieve, "warmup portal")
+            logger.info("Chatbot FAISS vector store pre-warmed successfully.")
+
+            # 4. Pre-warm Gemini API connection
+            try:
+                await service._call_gemini("hi")
+                logger.info("Gemini API connection pre-warmed successfully.")
+            except Exception as gem_exc:
+                logger.debug("Gemini pre-warm ping notice: %s", gem_exc)
+
+
+        except Exception as exc:
+            logger.warning("Chatbot warmup partial failure (non-fatal): %s", exc)
+
+    await _warmup_chatbot()
+
+    logger.info("Application startup complete. All AI chatbot subsystems pre-warmed.")
+
     try:
         yield
     finally:

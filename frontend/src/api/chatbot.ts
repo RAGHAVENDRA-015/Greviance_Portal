@@ -52,16 +52,34 @@ export async function streamChat(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  let response: Response
-  try {
-    response = await fetch(`${baseURL}/chat/stream`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ message }),
-      signal,
-    })
-  } catch (err) {
-    if ((err as Error).name === 'AbortError') return
+  let response: Response | undefined
+  const maxRetries = 2
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      response = await fetch(`${baseURL}/chat/stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ message }),
+        signal,
+      })
+
+      if (response.ok || attempt === maxRetries || response.status === 400 || response.status === 401 || response.status === 422) {
+        break
+      }
+
+      // Retryable server errors (502, 503, 504)
+      await new Promise((resolve) => setTimeout(resolve, 800 * attempt))
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return
+      if (attempt === maxRetries) {
+        throw new Error('Network error: could not connect to the AI service. Please check your connection and try again.')
+      }
+      await new Promise((resolve) => setTimeout(resolve, 800 * attempt))
+    }
+  }
+
+  if (!response) {
     throw new Error('Network error: could not connect to the AI service.')
   }
 

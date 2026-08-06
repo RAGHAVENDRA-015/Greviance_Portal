@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes } from 'react'
+import React, { type ButtonHTMLAttributes } from 'react'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/utils'
@@ -32,7 +32,7 @@ const sizes: Record<Size, string> = {
   lg: 'h-12 px-6 text-base rounded-2xl',
 }
 
-export function Button({
+export const Button = React.memo(function Button({
   className,
   variant = 'primary',
   size = 'md',
@@ -66,4 +66,4 @@ export function Button({
       {!loading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
     </motion.button>
   )
-}
+})

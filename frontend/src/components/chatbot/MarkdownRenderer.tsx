@@ -6,10 +6,11 @@
  * - Bullet + numbered lists
  * - Tables
  * - Links (open in new tab safely)
- * - Inline code and fenced code blocks (delegated to CodeBlock)
+ * - Inline code and fenced code blocks (delegated to memoized CodeBlock)
  * - Blockquotes
  *
  * All rendering is scoped under .prose-chat CSS class (defined in index.css).
+ * Wrapped in React.memo to avoid AST re-parsing when sibling state changes.
  */
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -58,7 +59,7 @@ const markdownComponents: Components = {
   },
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({ content }) => {
   return (
     <div className="prose-chat">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -66,4 +67,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
       </ReactMarkdown>
     </div>
   )
-}
+})
+
+MarkdownRenderer.displayName = 'MarkdownRenderer'
