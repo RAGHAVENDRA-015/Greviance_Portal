@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -143,6 +144,93 @@ app.add_middleware(
 )
 
 logger.info("Configured CORS with ALLOWED_ORIGINS: %s", ALLOWED_ORIGINS)
+
+
+def is_origin_allowed(origin: str) -> bool:
+    """Helper to check if a request origin is permitted (supports localhost and vercel.app preview subdomains)."""
+    if not origin:
+        return False
+    normalized = origin.strip().rstrip("/")
+    if normalized in ALLOWED_ORIGINS:
+        return True
+    # Allow localhost on any port for development
+    if re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", normalized):
+        return True
+    # Allow Vercel preview/production deployments
+    if re.match(r"^https://[a-zA-Z0-9-]+\.vercel\.app$", normalized):
+        return True
+    return False
+
+
+@app.middleware("http")
+async def debug_cors_middleware(request: Request, call_next):
+    """
+    Middleware that:
+    1. Logs incoming requests and preflights.
+    2. Serves as a bulletproof safety net to inject CORS headers onto any response
+       (redirects, 4xx/500 errors, exception responses) if CORSMiddleware is bypassed.
+    """
+    origin = request.headers.get("origin")
+    method = request.method
+    path = request.url.path
+    auth_header = request.headers.get("authorization")
+    has_auth = "Yes" if auth_header else "No"
+
+    logger.info(
+        "CORS Debug — REQUEST: Method=%s Path=%s Origin=%s AuthorizationPresent=%s",
+        method,
+        path,
+        origin,
+        has_auth,
+    )
+
+    # Bulletproof fallback for preflight OPTIONS requests
+    if method == "OPTIONS":
+        if origin and is_origin_allowed(origin):
+            logger.info("CORS Debug — Preflight OPTIONS matched allowed origin: %s", origin)
+            response = JSONResponse(status_code=200, content={"status": "ok"})
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = request.headers.get(
+                "access-control-request-headers", "*"
+            )
+            return response
+
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.error(
+            "CORS Debug — UNHANDLED EXCEPTION in router/middleware: %s %s | Error: %s",
+            method,
+            path,
+            exc,
+            exc_info=True,
+        )
+        response = JSONResponse(
+            status_code=500,
+            content={"detail": "An internal server error occurred."},
+        )
+
+    # Bulletproof fallback: ensure every response returned to an allowed origin has CORS headers
+    if origin and is_origin_allowed(origin):
+        if "access-control-allow-origin" not in response.headers:
+            response.headers["access-control-allow-origin"] = origin
+            response.headers["access-control-allow-credentials"] = "true"
+            response.headers["access-control-allow-methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response.headers["access-control-allow-headers"] = request.headers.get(
+                "access-control-request-headers", "*"
+            )
+            logger.info("CORS Debug — Injected missing CORS headers for Origin: %s", origin)
+
+    logger.info(
+        "CORS Debug — RESPONSE: Method=%s Path=%s Status=%d OriginHeader=%s",
+        method,
+        path,
+        response.status_code,
+        response.headers.get("access-control-allow-origin"),
+    )
+    return response
 
 
 # ---------------------------------------------------------------------------
