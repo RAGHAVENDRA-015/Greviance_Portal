@@ -47,11 +47,15 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins(self) -> List[str]:
-        return [
+        origins = [
             origin.strip().rstrip("/")
             for origin in self.ALLOWED_ORIGINS.split(",")
             if origin.strip()
         ]
+        default_vercel = "https://greviance-portal-kappa.vercel.app"
+        if default_vercel not in origins:
+            origins.append(default_vercel)
+        return origins
 
     @property
     def faq_data_path_resolved(self) -> Path:

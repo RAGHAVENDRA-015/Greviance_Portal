@@ -137,6 +137,7 @@ ALLOWED_ORIGINS = settings.allowed_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app|https?://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,17 +148,20 @@ logger.info("Configured CORS with ALLOWED_ORIGINS: %s", ALLOWED_ORIGINS)
 
 
 def is_origin_allowed(origin: str) -> bool:
-    """Helper to check if a request origin is permitted (supports localhost and vercel.app preview subdomains)."""
+    """Helper to check if a request origin is permitted (supports localhost, vercel.app, and onrender.com subdomains)."""
     if not origin:
         return False
     normalized = origin.strip().rstrip("/")
-    if normalized in ALLOWED_ORIGINS:
+    if "*" in ALLOWED_ORIGINS or "all" in ALLOWED_ORIGINS or normalized in ALLOWED_ORIGINS:
         return True
     # Allow localhost on any port for development
-    if re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", normalized):
+    if re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", normalized, re.IGNORECASE):
         return True
     # Allow Vercel preview/production deployments
-    if re.match(r"^https://[a-zA-Z0-9-]+\.vercel\.app$", normalized):
+    if re.match(r"^https://.*\.vercel\.app$", normalized, re.IGNORECASE):
+        return True
+    # Allow Render app deployments
+    if re.match(r"^https://.*\.onrender\.com$", normalized, re.IGNORECASE):
         return True
     return False
 
@@ -214,11 +218,11 @@ async def debug_cors_middleware(request: Request, call_next):
 
     # Bulletproof fallback: ensure every response returned to an allowed origin has CORS headers
     if origin and is_origin_allowed(origin):
-        if "access-control-allow-origin" not in response.headers:
-            response.headers["access-control-allow-origin"] = origin
-            response.headers["access-control-allow-credentials"] = "true"
-            response.headers["access-control-allow-methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-            response.headers["access-control-allow-headers"] = request.headers.get(
+        if not any(k.lower() == "access-control-allow-origin" for k in response.headers.keys()):
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = request.headers.get(
                 "access-control-request-headers", "*"
             )
             logger.info("CORS Debug — Injected missing CORS headers for Origin: %s", origin)
